@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <ul id="content"></ul>
+    <div class="loadmore">
+        <a href="#" id="loadMore">加载更多</a>
+    </div>
+    <script>
+        var loadMore = document.querySelector('#loadMore')
+        var content = document.querySelector('#content')
+        var pageIndex = 0
+        var dataArrived = true
+        loadMore.addEventListener('click',function(e){
+           e.preventDefault()
+            if(!dataArrived){
+                return
+            }
+            loadData(function(news){
+                renderPage(news)
+                pageIndex = pageIndex + 5
+                dataArrived = true
+            })
+            dataArrived = false
+            
+        })
+
+        function loadData(callback){
+            ajax({
+                type: 'get',
+                url: '/loadMore',
+                data: {
+                    index: pageIndex,
+                    length: 5
+                },
+                onSuccess: callback,
+                error: function(){
+                    console.log('出错了！')
+                }
+
+            })
+
+        }
+
+        function renderPage(news){
+            var fragment = document.createDocumentFragment()
+            for(var i = 0; i<news.length; i++){
+                var li = document.createElement('li')
+                li.innerText = news[i]
+                fragment.appendChild(li)
+            }   
+            content.appendChild(fragment)
+        }
+
+        function ajax(options){
+            var xhr = new XMLHttpRequest()
+            xhr.onreadystatechange = function(){
+                
+                if(xhr.readyState === 4) {
+                    if(xhr.status === 200||xhr.status === 304){
+                        var results = JSON.parse(xhr.responseText)
+                        options.onSuccess(results)
+                        
+                    }else{
+                        options.error()
+                    }                      
+                }               
+            }
+            var query = '?'
+            for(key in options.data){
+                query += key + '=' + options.data[key] + '&'
+            }
+            query = query.substr(0,query.length-1)
+            xhr.open(options.type,options.url+query,true)  //  默认true 异步 可以省略
+            xhr.send()
+        }
+    </script>
+    
+</body>
+</html>
